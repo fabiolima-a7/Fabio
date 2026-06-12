@@ -1,1 +1,14 @@
-Teste 123
+Para enviar coisas na tela do seu amiguinho; 
+Conecte via ssh no endereço ip dele (ssh alpha7@ip)
+
+Para encaminhar uma mensagem troque o "msg" pela sua mensagem;
+DISPLAY=:0 notify-send "msg"
+
+Para abrir algum video no Firefox troque o youtube.com pela url; 
+DISPLAY=:0 firefox youtube.com
+
+Para bloquear a tela utilize; 
+xflock4
+
+Existe a possibilidade de verificar qual endereço ip conectou em sua máquina; (creditos: Gabriel Gois)
+sudo grep "Accepted" /var/log/auth.log
