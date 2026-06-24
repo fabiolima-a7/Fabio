@@ -1,0 +1,75 @@
+#!/bin/bash
+
+set -e
+
+ECDSA_KEY="/etc/ssh/ssh_host_ecdsa_key"
+SSHD_CONFIG="/etc/ssh/sshd_config"
+
+pause() {
+    sleep 3
+}
+
+echo "==== Verificando chaves SSH existentes ===="
+ls -l /etc/ssh/ssh_host_* || true
+
+pause
+
+echo
+echo "==== Verificando chave ECDSA ===="
+
+if [ -f "$ECDSA_KEY" ]; then
+    echo "Chave ECDSA já existe."
+    echo "Nenhuma alteração necessária. Cancelando processo."
+    exit 0
+fi
+
+echo "Chave ECDSA não encontrada. Gerando..."
+
+pause
+
+ssh-keygen -t ecdsa -f "$ECDSA_KEY" -N ""
+
+echo "Chave ECDSA criada com sucesso."
+
+pause
+
+echo
+echo "==== Ajustando sshd_config ===="
+
+grep -q "^HostKey /etc/ssh/ssh_host_rsa_key" "$SSHD_CONFIG" || \
+    echo "HostKey /etc/ssh/ssh_host_rsa_key" >> "$SSHD_CONFIG"
+
+grep -q "^HostKey /etc/ssh/ssh_host_ecdsa_key" "$SSHD_CONFIG" || \
+    echo "HostKey /etc/ssh/ssh_host_ecdsa_key" >> "$SSHD_CONFIG"
+
+echo "Configuração aplicada."
+
+pause
+
+echo
+echo "==== Reiniciando serviço SSH ===="
+
+if systemctl list-units --type=service | grep -q sshd.service; then
+    systemctl restart sshd
+else
+    service sshd restart
+fi
+
+echo "Serviço SSH reiniciado com sucesso."
+
+pause
+
+echo
+echo "==== Validando anúncio ECDSA ===="
+
+if ssh-keyscan -t ecdsa localhost 2>/dev/null | grep -q "ecdsa"; then
+    echo "Servidor está anunciando ECDSA."
+else
+    echo "ERRO: servidor NÃO está anunciando ECDSA."
+    exit 1
+fi
+
+pause
+
+echo
+echo "Processo concluído."
